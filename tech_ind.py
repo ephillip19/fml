@@ -6,6 +6,12 @@ import pandas as pd
 import matplotlib
 import matplotlib.pyplot as plt
 
+# GITHUB INSTRUCTIONS
+# git add -A
+# git commit -m "message"
+# git push
+
+# If you need to pull without saving your local changes: git stash
 
 data = get_data(
     "1/1/2018", "12/31/2019", ["DIS"], column_name="Adj Close", include_spy=False
@@ -22,7 +28,7 @@ def calc_sma(prices, n):
     return prices
 
 
-def BB(prices, n):
+def calc_BB(prices, n):
 
     prices = calc_sma(prices, n)
 
@@ -49,13 +55,19 @@ def BB(prices, n):
 
 def calc_ema(prices, n):
 
-    alpha = 2/(n+1)    
+    alpha = 2 / (n + 1)
     prices = calc_sma(prices, n)
 
     prices["EMA"] = prices["SMA"]
 
     for i in range(0, n):
-        prices["EMA"] = alpha*prices["DIS"] + (1-alpha)*prices["EMA"].shift(periods=i)
+        prices["EMA"] = alpha * prices["DIS"] + (1 - alpha) * prices["EMA"]
 
-    prices["EMA"] = prices["EMA"]
+    prices["price/EMA"] = prices["DIS"] / prices["EMA"]
     return prices
+
+
+boll_band = calc_BB(data, 5)
+ema = calc_ema(boll_band, 5)
+
+print(ema)
