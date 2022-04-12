@@ -49,11 +49,13 @@ def BB(prices, n):
 
 def calc_ema(prices, n):
 
-    alpha = 2/(n+1)        
-    prices["EMA"] = prices["DIS"]
+    alpha = 2/(n+1)    
+    prices = calc_sma(prices, n)
 
-    for i in range(1, n):
-        prices["EMA"] = alpha*prices["EMA"] + (1-alpha)*prices["DIS"].shift(periods=i)
+    prices["EMA"] = prices["SMA"]
+
+    for i in range(0, n):
+        prices["EMA"] = alpha*prices["DIS"] + (1-alpha)*prices["SMA"].shift(periods=i)
 
     prices["EMA"] = prices["EMA"]
     return prices
