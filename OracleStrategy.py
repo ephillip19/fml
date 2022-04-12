@@ -45,7 +45,33 @@ class OracleStrategy:
             today = df_trades.index[i]
             tomorrow = df_trades.index[i + 1]
             if data[today, "DIS"] < data[tomorrow, "DIS"]:
-                print("tbd")
+                if shares == 0:
+                    df_trades[today, "Trades"] = 2000
+
+                if shares == 1000:
+                    df_trades[today, "Trades"] = 1000    
+
+                if shares == -1000:
+                    df_trades[today, "Trades"] = 2000
+
+                if shares == -2000:
+                    df_trades[today, "Trades"] = 2000      
+
+            if data[today, "DIS"] > data[tomorrow, "DIS"]:
+                if shares == 0:
+                    df_trades[today, "Trades"] = -2000
+
+                if shares == 1000:
+                    df_trades[today, "Trades"] = -2000    
+
+                if shares == -1000:
+                    df_trades[today, "Trades"] = -1000
+
+                if shares == 2000:
+                    df_trades[today, "Trades"] = -2000       
+                    
+
+                    
 
         return df_trades
 
