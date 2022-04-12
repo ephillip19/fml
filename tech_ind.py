@@ -55,7 +55,7 @@ def calc_ema(prices, n):
     prices["EMA"] = prices["SMA"]
 
     for i in range(0, n):
-        prices["EMA"] = alpha*prices["DIS"] + (1-alpha)*prices["SMA"].shift(periods=i)
+        prices["EMA"] = alpha*prices["DIS"] + (1-alpha)*prices["EMA"].shift(periods=i)
 
     prices["EMA"] = prices["EMA"]
     return prices
