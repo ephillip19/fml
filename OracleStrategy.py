@@ -35,44 +35,43 @@ class OracleStrategy:
             include_spy=False,
         )
 
+        data["Cash"] = starting_cash
         df_trades = data.copy()
-        df_trades.drop(columns=["DIS"])
+        df_trades = df_trades.drop(columns=["DIS"])
         df_trades["Trades"] = np.NaN
 
         shares = 0
-
-        for i in range(df_trades.shape[0]):
+        for i in range(df_trades.shape[0] - 1):
             today = df_trades.index[i]
             tomorrow = df_trades.index[i + 1]
-            if data[today, "DIS"] < data[tomorrow, "DIS"]:
+            if data.loc[today, "DIS"] < data.loc[tomorrow, "DIS"]:
                 if shares == 0:
-                    df_trades[today, "Trades"] = 2000
+                    df_trades.loc[today, "Trades"] = 2000
 
                 if shares == 1000:
-                    df_trades[today, "Trades"] = 1000    
+                    df_trades.loc[today, "Trades"] = 1000
 
                 if shares == -1000:
-                    df_trades[today, "Trades"] = 2000
+                    df_trades.loc[today, "Trades"] = 2000
 
                 if shares == -2000:
-                    df_trades[today, "Trades"] = 2000      
+                    df_trades.loc[today, "Trades"] = 2000
 
-            if data[today, "DIS"] > data[tomorrow, "DIS"]:
+            if data.loc[today, "DIS"] > data.loc[tomorrow, "DIS"]:
                 if shares == 0:
-                    df_trades[today, "Trades"] = -2000
+                    df_trades.loc[today, "Trades"] = -2000
 
                 if shares == 1000:
-                    df_trades[today, "Trades"] = -2000    
+                    df_trades.loc[today, "Trades"] = -2000
 
                 if shares == -1000:
-                    df_trades[today, "Trades"] = -1000
+                    df_trades.loc[today, "Trades"] = -1000
 
                 if shares == 2000:
-                    df_trades[today, "Trades"] = -2000       
-                    
+                    df_trades.loc[today, "Trades"] = -2000
 
-                    
-
+        print(data)
+        print(df_trades)
         return df_trades
 
     test()
