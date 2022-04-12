@@ -6,6 +6,7 @@ import pandas as pd
 import matplotlib
 import matplotlib.pyplot as plt
 
+
 data = get_data(
     "1/1/2018", "12/31/2019", ["DIS"], column_name="Adj Close", include_spy=False
 )
@@ -43,7 +44,16 @@ def BB(prices, n):
         prices["BB_upper"] - prices["BB_lower"]
     )
 
-    print(prices)
+    return prices
 
 
-BB(data, 5)
+def calc_ema(prices, n):
+
+    alpha = 2/(n+1)        
+    prices["EMA"] = prices["DIS"]
+
+    for i in range(1, n):
+        prices["EMA"] = alpha*prices["EMA"] + (1-alpha)*prices["DIS"].shift(periods=i)
+
+    prices["EMA"] = prices["EMA"]
+    return prices
