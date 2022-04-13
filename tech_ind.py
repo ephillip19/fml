@@ -77,5 +77,6 @@ def calc_aroon(prices, n):
 boll_band = calc_BB(data, 5)
 ema = calc_ema(boll_band, 5)
 aroon = calc_aroon(ema, 25)
+# attempt 2
 
 print(ema)
