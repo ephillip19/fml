@@ -67,7 +67,15 @@ def calc_ema(prices, n):
     return prices
 
 
+def calc_aroon(prices, n):
+    prices["Aroon"] = np.NaN
+    for i in range(n, prices.shape[0]):
+        period_array = prices.iloc[i - (n - 1) : i, "DIS"]
+        print(period_array)
+
+
 boll_band = calc_BB(data, 5)
 ema = calc_ema(boll_band, 5)
+aroon = calc_aroon(ema, 25)
 
 print(ema)
