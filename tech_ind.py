@@ -71,14 +71,33 @@ def calc_ema(prices, n):
 def calc_aroon(prices, n):
     prices["Aroon"] = np.NaN
     for i in range(n, prices.shape[0]):
-        period_start = prices.index[i-(n-1)]
+        period_start = prices.index[i-n]
         period_end = prices.index[i]
-        period_array = prices[period_start: period_end, "DIS"]
-        print(period_array)
+        period_array = prices.loc[period_start: period_end, "DIS"]
+        period_list = period_array.tolist()
+        #aroon up 
+        period_high = max(period_list)
+        period_high_index = period_list.index(period_high)
+        period_since_up = n - (period_high_index+1)
+        aroon_up = 100*(n-period_since_up-period_high)/n
+
+        #aroon down 
+        period_low = min(period_list)
+        period_low_index = period_list.index(period_low)
+        period_since_down = n - (period_low_index+1)
+        aroon_down = 100*(n-period_since_down-period_low)/n
+
+
+        prices.loc[period_end, "Aroon"] = aroon_up-aroon_down
+        
+
+
+    print(prices.show())
 
 
 boll_band = calc_BB(data, 5)
 ema = calc_ema(boll_band, 5)
 aroon = calc_aroon(ema, 25)
 
-print(ema)
+print(aroon)
+
