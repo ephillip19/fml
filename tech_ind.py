@@ -1,5 +1,6 @@
 # tech_ind.py
 # CSCI 3465
+from lib2to3.pgen2.token import PERCENT
 from assess import *
 import numpy as np
 import pandas as pd
@@ -70,7 +71,9 @@ def calc_ema(prices, n):
 def calc_aroon(prices, n):
     prices["Aroon"] = np.NaN
     for i in range(n, prices.shape[0]):
-        period_array = prices.iloc[i - (n - 1) : i, "DIS"]
+        period_start = prices.index[i-(n-1)]
+        period_end = prices.index[i]
+        period_array = prices[period_start: period_end, "DIS"]
         print(period_array)
 
 
