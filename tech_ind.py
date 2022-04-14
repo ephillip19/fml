@@ -1,5 +1,6 @@
 # tech_ind.py
 # CSCI 3465
+from cgi import test
 from lib2to3.pgen2.token import PERCENT
 from assess import *
 import numpy as np
@@ -64,13 +65,15 @@ def calc_ema(prices, n):
     for i in range(0, n):
         prices["EMA"] = alpha * prices["DIS"] + (1 - alpha) * prices["EMA"]
 
-    prices["price/EMA"] = prices["DIS"] / prices["EMA"]
+    prices["Price/EMA"] = prices["DIS"] / prices["EMA"]
+
     return prices
 
 
 def calc_aroon(prices, n):
     prices["Aroon"] = np.NaN
     for i in range(n, prices.shape[0]):
+
         period_start = prices.index[i-n]
         period_end = prices.index[i]
         period_array = prices.loc[period_start: period_end, "DIS"]
@@ -79,26 +82,30 @@ def calc_aroon(prices, n):
         period_high = max(period_list)
         period_high_index = period_list.index(period_high)
         period_since_up = n - (period_high_index+1)
-        aroon_up = 100*(n-period_since_up-period_high)/n
+        aroon_up = 100*(n-period_since_up)/n
+        print(aroon_up)
 
         #aroon down 
         period_low = min(period_list)
         period_low_index = period_list.index(period_low)
         period_since_down = n - (period_low_index+1)
-        aroon_down = 100*(n-period_since_down-period_low)/n
+        aroon_down = 100*(n-period_since_down)/n
+        print(aroon_down)
 
 
         prices.loc[period_end, "Aroon"] = aroon_up-aroon_down
         
+    return prices
+
+def test():
+    
+    calc_aroon(data, 5)
+    calc_BB(data, 5)
+    calc_ema(data, 5)
 
 
-    print(prices.show())
 
+    return data
 
-boll_band = calc_BB(data, 5)
-ema = calc_ema(boll_band, 5)
-aroon = calc_aroon(ema, 25)
-# attempt 2
-
-print(aroon)
+print(test())
 
