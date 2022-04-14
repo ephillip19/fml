@@ -18,7 +18,7 @@ import matplotlib.pyplot as plt
 # If you need to pull without saving your local changes: git stash
 
 data = get_data(
-    "1/1/2018", "12/31/2019", ["DIS"], column_name="Adj Close", include_spy=False
+    "1/1/2018", "1/1/2019", ["DIS"], column_name="Adj Close", include_spy=False
 )
 
 
@@ -168,7 +168,7 @@ def calc_aroon(prices, n):
 
 def test():
 
-    # calc_ema(data, 5)
+    # calc_ema(data, 25)
     # calc_aroon(data, 25)
     # calc_BB(data, 30)
 
