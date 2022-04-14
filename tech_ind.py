@@ -81,8 +81,12 @@ def calc_ema(prices, n):
 
     prices["EMA"] = prices["SMA"]
 
-    for i in range(0, n):
-        prices["EMA"] = alpha * prices["DIS"] + (1 - alpha) * prices["EMA"]
+    for i in range(n, prices.shape[0]):
+        date = prices.index[i]
+        prev_date = prices.index[i - 1]
+        prices.loc[date, "EMA"] = (
+            alpha * prices.loc[date, "DIS"] + (1 - alpha) * prices.loc[prev_date, "EMA"]
+        )
 
     prices["Price/SMA"] = prices["DIS"] / prices["SMA"]
     prices["Price/EMA"] = prices["DIS"] / prices["EMA"]
@@ -164,7 +168,7 @@ def calc_aroon(prices, n):
 
 def test():
 
-    calc_ema(data, 25)
+    # calc_ema(data, 5)
     # calc_aroon(data, 25)
     # calc_BB(data, 30)
 
