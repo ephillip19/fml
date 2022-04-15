@@ -53,10 +53,8 @@ class TechnicalStrategy:
             ema = data.loc[today, "Price/SMA"]
             bb = data.loc[today, "BB%"]
 
-            print((bb, aroon, ema))
-            print("------")
 
-            if bb <= 0.5 and (aroon >= 25 or aroon == "NaN") and ema < 0.95:
+            if bb >= 0.5 and (aroon >= 25 or aroon == "NaN") and ema < 0.95:
                 df_trades.loc[tomorrow, "Shares"] = 1000
                 df_trades.loc[tomorrow, "Direction"] = "BUY"
             if bb >= 0.5 and (aroon <= -25 or aroon == "NaN") and ema > 1.05:
@@ -70,4 +68,3 @@ class TechnicalStrategy:
         df_trades["Trades"] = abs(df_trades["Shares"] - df_trades["Shares"].shift())
 
         return df_trades.drop(columns=["Shares"])
-    print(test()["Trades"].sum())

@@ -49,46 +49,44 @@ class OracleStrategy:
         for i in range(df_trades.shape[0]-1):
             today = df_trades.index[i]
             tomorrow = df_trades.index[i + 1]
+            
             if data.loc[today, "DIS"] < data.loc[tomorrow, "DIS"]:
                 if df_trades.loc[today, "Shares"] == 0:
+
                     df_trades.loc[today, "Trades"] = 1000
                     df_trades.loc[tomorrow, "Shares"] = 1000
-                    df_trades.loc[tomorrow, "Direction"] = "BUY"
+                    df_trades.loc[today, "Direction"] = "BUY"
 
-                if df_trades.loc[today, "Shares"] == -1000:
+                elif df_trades.loc[today, "Shares"] == -1000:
                     df_trades.loc[today, "Trades"] = 2000
                     df_trades.loc[tomorrow, "Shares"] = 1000
-                    df_trades.loc[tomorrow, "Direction"] = "BUY"
+                    df_trades.loc[today, "Direction"] = "BUY"
 
                 else:
                     df_trades.loc[today, "Trades"] = 0
                     df_trades.loc[tomorrow, "Shares"] = 1000
-                    df_trades.loc[tomorrow, "Direction"] = "BUY"
 
 
             if data.loc[today, "DIS"] > data.loc[tomorrow, "DIS"]:
                 if df_trades.loc[today, "Shares"] == 0:
                     df_trades.loc[today, "Trades"] = 1000
                     df_trades.loc[tomorrow, "Shares"] = -1000
-                    df_trades.loc[tomorrow, "Direction"] = "SELL"
+                    df_trades.loc[today, "Direction"] = "SELL"
 
 
-                if df_trades.loc[today, "Shares"] == 1000:
+                elif df_trades.loc[today, "Shares"] == 1000:
                     df_trades.loc[today, "Trades"] = 2000
                     df_trades.loc[tomorrow, "Shares"] = -1000
-                    df_trades.loc[tomorrow, "Direction"] = "SELL"
+                    df_trades.loc[today, "Direction"] = "SELL"
 
                 else:
                     df_trades.loc[today, "Trades"] = 0
-                    df_trades.loc[tomorrow, "Shares"] = -1000
+                    df_trades.loc[today, "Shares"] = -1000
 
-
-        print(data["Daily Return"].sum()*1000)
+        print("+++++++++++++++++++")
         print(df_trades.drop(columns=["Shares"]))
         
         return df_trades.drop(columns=["Shares"])
 
 
-
     test()
-       
