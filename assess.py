@@ -1,6 +1,6 @@
 # assess.py
-# Evan Zamora Phillips
 # CSCI 3465
+# Evan Phillips and Sumer Vaidya
 
 import sys
 import math

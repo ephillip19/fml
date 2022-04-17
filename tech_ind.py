@@ -1,9 +1,7 @@
 # tech_ind.py
 # CSCI 3465
-from cgi import test
-from lib2to3.pgen2.token import PERCENT
+# Evan Phillips and Sumer Vaidya
 
-from pyparsing import col
 from assess import *
 import numpy as np
 import pandas as pd
@@ -18,7 +16,7 @@ import matplotlib.pyplot as plt
 # If you need to pull without saving your local changes: git stash
 
 data = get_data(
-    "1/1/2018", "1/1/2019", ["DIS"], column_name="Adj Close", include_spy=False
+    "1/1/2018", "12/31/2019", ["DIS"], column_name="Adj Close", include_spy=False
 )
 
 
@@ -53,23 +51,24 @@ def calc_BB(prices, n):
     prices["BB%"] = (prices["DIS"] - prices["BB_lower"]) / (
         prices["BB_upper"] - prices["BB_lower"]
     )
-    # PLOT INDICATOR
-    fig, axs = plt.subplots(2)
-    fig.suptitle("Bollinger Band Analysis")
-    axs[0].plot(prices["SMA"], color="g")
-    axs[0].plot(prices["BB_lower"], label="BB-" + str(n), color="g")
-    axs[0].plot(prices["BB_upper"], color="g")
-    axs[0].plot(prices["DIS"], label="DIS", color="b")
 
-    axs[1].plot(prices["BB%"], label="BB%", color="m")
-    axs[0].legend()
-    axs[1].legend()
-    axs[1].set(xlabel="Date")
-    axs[0].grid()
-    axs[1].grid()
-    axs[0].set(ylabel="Price")
-    axs[1].set(ylabel="BB%")
-    plt.show()
+    # # PLOT INDICATOR
+    # fig, axs = plt.subplots(2)
+    # fig.suptitle("Bollinger Band Analysis")
+    # axs[0].plot(prices["SMA"], color="g")
+    # axs[0].plot(prices["BB_lower"], label="BB-" + str(n), color="g")
+    # axs[0].plot(prices["BB_upper"], color="g")
+    # axs[0].plot(prices["DIS"], label="DIS", color="b")
+
+    # axs[1].plot(prices["BB%"], label="BB%", color="m")
+    # axs[0].legend()
+    # axs[1].legend()
+    # axs[1].set(xlabel="Date")
+    # axs[0].grid()
+    # axs[1].grid()
+    # axs[0].set(ylabel="Price")
+    # axs[1].set(ylabel="BB%")
+    # # plt.show()
 
     return prices
 
@@ -91,24 +90,24 @@ def calc_ema(prices, n):
     prices["Price/SMA"] = prices["DIS"] / prices["SMA"]
     prices["Price/EMA"] = prices["DIS"] / prices["EMA"]
 
-    # PLOT INDICATOR
-    fig, axs = plt.subplots(2)
-    fig.suptitle("Moving Average Analysis")
-    axs[0].plot(prices["SMA"], label="SMA-" + str(n))
-    axs[0].plot(prices["EMA"], label="EMA-" + str(n))
-    axs[0].plot(prices["DIS"], label="DIS")
+    # # PLOT INDICATOR
+    # fig, axs = plt.subplots(2)
+    # fig.suptitle("Moving Average Analysis")
+    # axs[0].plot(prices["SMA"], label="SMA-" + str(n))
+    # axs[0].plot(prices["EMA"], label="EMA-" + str(n))
+    # axs[0].plot(prices["DIS"], label="DIS")
 
-    axs[1].plot(prices["Price/SMA"], label="Price/SMA")
-    axs[1].plot(prices["Price/EMA"], label="Price/EMA")
+    # axs[1].plot(prices["Price/SMA"], label="Price/SMA")
+    # axs[1].plot(prices["Price/EMA"], label="Price/EMA")
 
-    axs[0].legend()
-    axs[1].legend()
-    axs[1].set(xlabel="Date")
-    axs[0].grid()
-    axs[1].grid()
-    axs[0].set(ylabel="Price")
-    axs[1].set(ylabel="Price/Moving Average")
-    plt.show()
+    # axs[0].legend()
+    # axs[1].legend()
+    # axs[1].set(xlabel="Date")
+    # axs[0].grid()
+    # axs[1].grid()
+    # axs[0].set(ylabel="Price")
+    # axs[1].set(ylabel="Price/Moving Average")
+    # plt.show()
 
     return prices
 
@@ -117,6 +116,7 @@ def calc_aroon(prices, n):
     prices["Aroon Up"] = np.NaN
     prices["Aroon Down"] = np.NaN
     prices["Aroon Oscillator"] = np.NaN
+
     for i in range(n, prices.shape[0]):
 
         period_start = prices.index[i - n]
@@ -141,27 +141,27 @@ def calc_aroon(prices, n):
 
         prices.loc[period_end, "Aroon Oscillator"] = aroon_up - aroon_down
 
-    # PLOT INDICATORS
-    fig, axs = plt.subplots(2)
-    fig.suptitle("Aroon Indicator Analysis")
-    # axs[0].plot(prices["Aroon Oscillator"], label="Aroon Oscillator", color="m")
-    axs[0].plot(prices["DIS"], label="DIS", color="b")
-    axs0 = axs[0].twinx()
-    axs0.plot(prices["Aroon Oscillator"], label="Aroon Oscillator", color="m")
+    # # PLOT INDICATORS
+    # fig, axs = plt.subplots(2)
+    # fig.suptitle("Aroon Indicator Analysis")
+    # # axs[0].plot(prices["Aroon Oscillator"], label="Aroon Oscillator", color="m")
+    # axs[0].plot(prices["DIS"], label="DIS", color="b")
+    # axs0 = axs[0].twinx()
+    # axs0.plot(prices["Aroon Oscillator"], label="Aroon Oscillator", color="m")
 
-    axs[1].plot(prices["Aroon Up"], label="Aroon Up", color="g")
-    axs[1].plot(prices["Aroon Down"], label="Aroon Down", color="r")
+    # axs[1].plot(prices["Aroon Up"], label="Aroon Up", color="g")
+    # axs[1].plot(prices["Aroon Down"], label="Aroon Down", color="r")
 
-    axs[0].legend(loc="lower left")
-    axs0.legend()
-    axs[1].legend(bbox_to_anchor=(0, -0.3), loc="lower center")
-    axs[1].set(xlabel="Date")
-    axs[0].grid()
-    axs[1].grid()
-    axs[0].set(ylabel="Price")
-    axs0.set(ylabel="Aroon")
-    axs[1].set(ylabel="Aroon")
-    plt.show()
+    # axs[0].legend(loc="lower left")
+    # axs0.legend()
+    # axs[1].legend(bbox_to_anchor=(0, -0.3), loc="lower center")
+    # axs[1].set(xlabel="Date")
+    # axs[0].grid()
+    # axs[1].grid()
+    # axs[0].set(ylabel="Price")
+    # axs0.set(ylabel="Aroon")
+    # axs[1].set(ylabel="Aroon")
+    # # plt.show()
 
     return prices
 

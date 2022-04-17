@@ -1,6 +1,8 @@
 # OracleStrategy.py
 # CSCI 3465
-from assess import *
+# Evan Phillips and Sumer Vaidya
+
+from BacktestEP import *
 import numpy as np
 import pandas as pd
 import matplotlib
@@ -35,58 +37,69 @@ class OracleStrategy:
             include_spy=False,
         )
 
-
-        
-
         df_trades = data.copy()
         df_trades = df_trades.drop(columns=["DIS"])
         df_trades["Symbol"] = "DIS"
         df_trades["Direction"] = np.NaN
         df_trades["Trades"] = np.NaN
         df_trades["Shares"] = 0
-        data["Daily Return"] = abs(data["DIS"]-data["DIS"].shift())
+        data["Daily Return"] = abs(data["DIS"].shift(periods=1) - data["DIS"])
 
-        for i in range(df_trades.shape[0]-1):
+        for i in range(df_trades.shape[0] - 1):
             today = df_trades.index[i]
             tomorrow = df_trades.index[i + 1]
-            
-            if data.loc[today, "DIS"] < data.loc[tomorrow, "DIS"]:
-                if df_trades.loc[today, "Shares"] == 0:
 
-                    df_trades.loc[today, "Trades"] = 1000
-                    df_trades.loc[tomorrow, "Shares"] = 1000
-                    df_trades.loc[today, "Direction"] = "BUY"
-
-                elif df_trades.loc[today, "Shares"] == -1000:
-                    df_trades.loc[today, "Trades"] = 2000
-                    df_trades.loc[tomorrow, "Shares"] = 1000
-                    df_trades.loc[today, "Direction"] = "BUY"
-
-                else:
-                    df_trades.loc[today, "Trades"] = 0
-                    df_trades.loc[tomorrow, "Shares"] = 1000
-
+            if data.loc[today, "DIS"] <= data.loc[tomorrow, "DIS"]:
+                df_trades.loc[today, "Direction"] = "BUY"
+                df_trades.loc[today, "Shares"] = 1000
 
             if data.loc[today, "DIS"] > data.loc[tomorrow, "DIS"]:
-                if df_trades.loc[today, "Shares"] == 0:
-                    df_trades.loc[today, "Trades"] = 1000
-                    df_trades.loc[tomorrow, "Shares"] = -1000
-                    df_trades.loc[today, "Direction"] = "SELL"
+                df_trades.loc[today, "Direction"] = "SELL"
+                df_trades.loc[today, "Shares"] = -1000
 
+        df_trades["Trades"] = abs(df_trades["Shares"].shift() - df_trades["Shares"])
 
-                elif df_trades.loc[today, "Shares"] == 1000:
-                    df_trades.loc[today, "Trades"] = 2000
-                    df_trades.loc[tomorrow, "Shares"] = -1000
-                    df_trades.loc[today, "Direction"] = "SELL"
+        start = df_trades.index[0]
+        df_trades.loc[start, "Trades"] = df_trades.loc[start, "Shares"]
 
-                else:
-                    df_trades.loc[today, "Trades"] = 0
-                    df_trades.loc[today, "Shares"] = -1000
+        # ------------------------------------------------------------------- #
+        df_trades = df_trades.drop(columns=["Shares"])
+        df_trades.reset_index(inplace=True)
+        df_trades = df_trades.rename(columns={"index": "Date"})
+        df_trades = df_trades.rename(columns={"Trades": "Shares"})
 
-        print("+++++++++++++++++++")
-        print(df_trades.drop(columns=["Shares"]))
-        
-        return df_trades.drop(columns=["Shares"])
+        return df_trades
 
+    def plot(trades):
+        # PLOT CUMULATIVE RETURNS
+        port = assess_strategy(trades, False)
+        baseline = assess_strategy(trades, True)
 
-    test()
+        port["Cumulative Portfolio Returns"] = (
+            port["Portfolio Value"] / port["Portfolio Value"][0] - 1
+        )
+
+        baseline["Cumulative Portfolio Returns"] = (
+            baseline["Portfolio Value"] / baseline["Portfolio Value"][0] - 1
+        )
+
+        plt.plot(
+            port["Cumulative Portfolio Returns"],
+            label="Oracle Cumulative Portfolio Returns",
+        )
+        plt.plot(
+            baseline["Cumulative Portfolio Returns"],
+            label="Baseline Cumulative Portfolio Returns",
+        )
+
+        plt.legend()
+        plt.grid()
+        plt.title("Oracle vs Baseline Strategy")
+        plt.xlabel("Date")
+        plt.ylabel("Return (zero-based)")
+        plt.show()
+
+    trades = test()
+    plot(trades)
+    port = assess_strategy(trades, False)
+    strategy_stats(port, "^SPX", trades)
