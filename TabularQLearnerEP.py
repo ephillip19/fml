@@ -7,7 +7,7 @@ import pandas as pd
 import random
 
 
-class TabularQLearner:
+class TabularQLearnerEP:
     def __init__(
         self,
         states=100,
@@ -88,6 +88,7 @@ class TabularQLearner:
 
     def get_action(self, new_state):
         # find best action
+        print(type(new_state))
         max_q = -100000
         best_action = None
         actions = list(range(self.actions))

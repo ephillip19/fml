@@ -6,6 +6,7 @@ import numpy as np
 import pandas as pd
 import argparse
 from tech_ind import *
+from TabularQLearnerEP import *
 
 
 class StockEnvironment:
@@ -23,16 +24,14 @@ class StockEnvironment:
         data = calc_ema(start_date, end_date, [symbol], 25)
         data = calc_aroon(data, 25)
         data = calc_BB(data, 30)
-
+        data["Daily Return"] = data[symbol]/data[symbol].shift() -1
         return data
 
 
     def calc_state(self, df, day, holdings):
         """Quantizes the state to a single number."""
-
-
     
-        coef = int(df.shape[0]/5)
+        coef = int(df.shape[0]/3)
 
         aroon_list = df["Aroon Oscillator"].tolist()[25:]
         ema_list = df["Price/EMA"].tolist()[25:]
@@ -42,19 +41,16 @@ class StockEnvironment:
         aroon_list.sort()
         ema_list.sort()
 
-
-        
         today_aroon = df.loc[day, "Aroon Oscillator"]
         today_ema = df.loc[day, "Price/EMA"]
         today_bb = df.loc[day, "BB%"]    
 
-        
         pos_val = 0
         aroon_val = 0
         ema_val = 0
         bb_val = 0
 
-        for i in range(1, 5):
+        for i in range(1, 3):
 
             if aroon_list[coef*(i-1)] <= today_aroon <= aroon_list[coef*i]: 
                 aroon_val = i
@@ -66,11 +62,11 @@ class StockEnvironment:
                 bb_val = i
         
         if aroon_val == 0: 
-            aroon_val ==5
+            aroon_val ==3
         if ema_val == 0: 
-            ema_val ==5
+            ema_val ==3
         if bb_val == 0: 
-            bb_val ==5
+            bb_val ==3
 
         if holdings == -1000: 
             pos_val = 1
@@ -79,12 +75,15 @@ class StockEnvironment:
         else: 
             pos_val = 3
 
-        return (str(aroon_val)+str(ema_val)+str(bb_val)+str(pos_val))
+        quant = (str(aroon_val)+str(ema_val)+str(bb_val)+str(pos_val))
+        return int(quant)
 
 
     def train_learner(
         self, start=None, end=None, symbol=None, trips=0, dyna=0, eps=0.0, eps_decay=0.0
     ):
+
+
         """
         Construct a Q-Learning trader and train it through many iterations of a stock
         world.  Store the trained learner in an instance variable for testing.
@@ -95,7 +94,43 @@ class StockEnvironment:
         Trip 499 net result: $13600.00
         """
 
-        pass
+        my_world = self.prepare_world("2018-01-01", "2019-12-31", "DIS")
+        my_world["Shares"] = 0
+        q_learner = TabularQLearnerEP(states = 81, actions = 3)
+
+        for j in range(500):
+            
+            first_state = self.calc_state(my_world, my_world.index[30], 0)
+            action = q_learner.test(first_state)
+            print("got here")
+            holdings = self.action_to_holding(action)
+
+
+            for i in range(31, my_world.shape[0]-1): 
+                today = my_world.index[i]
+                yesterday = my_world.index[i-1]
+
+                current_state = self.calc_state(my_world, today, holdings)
+
+                my_world.loc[today,"Shares"] = holdings
+                trade = my_world.loc[today,"Shares"] - my_world.loc[yesterday,"Shares"]
+
+                
+                if trade == 0: 
+                    reward = holdings*my_world.loc[today, "Daily Return"]
+                
+                if trade < 0: 
+                    reward = holdings*my_world.loc[today, "Daily Return"] - self.fixed_cost + trade*self.floating_cost
+
+                if trade > 0: 
+                    reward = holdings*my_world.loc[today, "Daily Return"] - self.fixed_cost - trade*self.floating_cost
+
+                new_action = q_learner.train(current_state, reward)
+                holdings = self.action_to_holding(new_action)
+                
+
+        return 0
+
 
     def test_learner(self, start=None, end=None, symbol=None):
         """
@@ -107,8 +142,30 @@ class StockEnvironment:
         Test trip, net result: $31710.00
         Benchmark result: $6690.0000
         """
-
         pass
+
+
+
+    def action_to_holding(self, action): 
+        if action == 0: 
+            return -1000
+        elif action == 1: 
+            return 0
+        else: 
+            return 1000
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 
@@ -214,8 +271,6 @@ if __name__ == "__main__":
     # env.test_learner( start = args.test_start, end = args.test_end, symbol = args.symbol )
 
 
-    my_world = StockEnvironment()
-
-    data = my_world.prepare_world("2018-01-01", "2019-12-31", "DIS")
-
-    print(my_world.calc_state(data, "2019-10-02", 0))
+print("hello")
+my_world = StockEnvironment()
+my_world.train_learner()
