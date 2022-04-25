@@ -8,6 +8,7 @@ import pandas as pd
 import matplotlib
 import matplotlib.pyplot as plt
 from tech_ind import *
+from assess import *
 
 
 class TechnicalStrategy:
@@ -31,23 +32,19 @@ class TechnicalStrategy:
         # Given the position limits, the only possible values are -2000, -1000, 0, 1000, 2000.
 
         data = get_data(
-            start_date,
-            end_date,
-            [symbol],
-            column_name="Adj Close",
-            include_spy=False,
+            start_date, end_date, [symbol], column_name="Adj Close", include_spy=False
         )
 
         df_trades = data.copy()
         df_trades = df_trades.drop(columns=[symbol])
-        df_trades["Symbol"] = "DIS"
+        df_trades["Symbol"] = symbol
         df_trades["Direction"] = np.NaN
         df_trades["Trades"] = np.NaN
         df_trades["Shares"] = 0
 
+        data = calc_ema(start_date, end_date, [symbol], 10)
         data = calc_aroon(data, 20)
         data = calc_BB(data, 5)
-        data = calc_ema(data, 10)
 
         trade_dates = []
 
@@ -151,6 +148,6 @@ class TechnicalStrategy:
     # trades = run[0]
     # dates = run[1]
     trades = test()
-    plot(trades)
-    port = assess_strategy(trades, False)
-    strategy_stats(port, "^SPX", trades)
+    # plot(trades)
+    # port = assess_strategy(trades, False)
+    # strategy_stats(port, "^SPX", trades)

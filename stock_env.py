@@ -2,6 +2,10 @@
 # Evan Phillips and Sumer Vaidya
 # CSCI 3465
 
+import numpy as np
+import pandas as pd
+from tech_ind import *
+
 
 class StockEnvironment:
     def __init__(self, fixed=None, floating=None, starting_cash=None, share_limit=None):
@@ -15,7 +19,11 @@ class StockEnvironment:
         Read the relevant price data and calculate some indicators.
         Return a DataFrame containing everything you need.
         """
-        pass
+        data = calc_ema(start_date, end_date, [symbol], 25)
+        data = calc_aroon(data, 25)
+        data = calc_BB(data, 30)
+
+        return data
 
     def calc_state(self, df, day, holdings):
         """Quantizes the state to a single number."""
