@@ -15,7 +15,7 @@ class StockEnvironment:
         self.floating_cost = floating
         self.starting_cash = starting_cash
 
-    def prepare_world(self, start_date, end_date, symbol, data_folder):
+    def prepare_world(self, start_date, end_date, symbol, data_folder=None):
         """
         Read the relevant price data and calculate some indicators.
         Return a DataFrame containing everything you need.
@@ -26,12 +26,61 @@ class StockEnvironment:
 
         return data
 
-        pass
 
     def calc_state(self, df, day, holdings):
         """Quantizes the state to a single number."""
 
-        pass
+
+    
+        coef = int(df.shape[0]/5)
+
+        aroon_list = df["Aroon Oscillator"].tolist()[25:]
+        ema_list = df["Price/EMA"].tolist()[25:]
+        bb_list = df["BB%"].tolist()[30:]  
+
+        bb_list.sort()
+        aroon_list.sort()
+        ema_list.sort()
+
+
+        
+        today_aroon = df.loc[day, "Aroon Oscillator"]
+        today_ema = df.loc[day, "Price/EMA"]
+        today_bb = df.loc[day, "BB%"]    
+
+        
+        pos_val = 0
+        aroon_val = 0
+        ema_val = 0
+        bb_val = 0
+
+        for i in range(1, 5):
+
+            if aroon_list[coef*(i-1)] <= today_aroon <= aroon_list[coef*i]: 
+                aroon_val = i
+            
+            if ema_list[coef*(i-1)] <= today_ema <= ema_list[coef*i]: 
+                ema_val = i
+
+            if bb_list[coef*(i-1)] <= today_bb <= bb_list[coef*i]: 
+                bb_val = i
+        
+        if aroon_val == 0: 
+            aroon_val ==5
+        if ema_val == 0: 
+            ema_val ==5
+        if bb_val == 0: 
+            bb_val ==5
+
+        if holdings == -1000: 
+            pos_val = 1
+        elif holdings == 0: 
+            pos_val = 2
+        else: 
+            pos_val = 3
+
+        return (str(aroon_val)+str(ema_val)+str(bb_val)+str(pos_val))
+
 
     def train_learner(
         self, start=None, end=None, symbol=None, trips=0, dyna=0, eps=0.0, eps_decay=0.0
@@ -60,6 +109,7 @@ class StockEnvironment:
         """
 
         pass
+
 
 
 if __name__ == "__main__":
@@ -162,3 +212,10 @@ if __name__ == "__main__":
 
     # Out of sample.  Only do this once you are fully satisfied with the in sample performance!
     # env.test_learner( start = args.test_start, end = args.test_end, symbol = args.symbol )
+
+
+    my_world = StockEnvironment()
+
+    data = my_world.prepare_world("2018-01-01", "2019-12-31", "DIS")
+
+    print(my_world.calc_state(data, "2019-10-02", 0))
