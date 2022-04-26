@@ -102,7 +102,9 @@ class StockEnvironment:
         """
 
         my_world = self.prepare_world("2018-01-01", "2019-12-31", "DIS")
+        my_world["Position"] = 0
         my_world["Shares"] = 0
+        my_world["Direction"] = 0
         q_learner = TabularQLearnerEP(states=81, actions=3)
 
         print("here")
@@ -117,15 +119,18 @@ class StockEnvironment:
                 today = my_world.index[i]
                 yesterday = my_world.index[i - 1]
 
+                
                 current_state = self.calc_state(my_world, today, holdings)
 
-                my_world.loc[today, "Shares"] = holdings
+                my_world.loc[today, "Position"] = holdings
                 trade = (
-                    my_world.loc[today, "Shares"] - my_world.loc[yesterday, "Shares"]
+                    my_world.loc[today, "Position"] - my_world.loc[yesterday, "Position"]
                 )
+            
 
                 if trade == 0:
                     reward = holdings * my_world.loc[today, "Daily Return"]
+                    my_world.loc[yesterday, "Shares"] = 0
 
                 if trade < 0:
                     reward = (
@@ -133,6 +138,9 @@ class StockEnvironment:
                         - self.fixed_cost
                         + trade * self.floating_cost
                     )
+                    
+                    my_world.loc[yesterday, "Shares"] = 1000
+                    my_world.loc[yesterday, "Direction"] = "SELL"
 
                 if trade > 0:
                     reward = (
@@ -140,11 +148,14 @@ class StockEnvironment:
                         - self.fixed_cost
                         - trade * self.floating_cost
                     )
+                    
+                    my_world.loc[yesterday, "Shares"] = 1000
+                    my_world.loc[yesterday, "Direction"] = "BUY"
 
                 new_action = q_learner.train(current_state, reward)
                 holdings = self.action_to_holding(new_action)
 
-        return 0
+        return my_world[[symbol, "Shares", "Direction" ]]
 
     def test_learner(self, start=None, end=None, symbol=None):
         """
