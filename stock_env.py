@@ -20,7 +20,6 @@ class StockEnvironment:
         self.indices = []
         self.q_learner = TabularQLearnerEP(states=81, actions=3)
 
-
     def prepare_world(self, start_date, end_date, symbol, data_folder=None):
         """
         Read the relevant price data and calculate some indicators.
@@ -119,14 +118,13 @@ class StockEnvironment:
                 today = my_world.index[i]
                 yesterday = my_world.index[i - 1]
 
-                
                 current_state = self.calc_state(my_world, today, holdings)
 
                 my_world.loc[today, "Position"] = holdings
                 trade = (
-                    my_world.loc[today, "Position"] - my_world.loc[yesterday, "Position"]
+                    my_world.loc[today, "Position"]
+                    - my_world.loc[yesterday, "Position"]
                 )
-            
 
                 if trade == 0:
                     reward = holdings * my_world.loc[today, "Daily Return"]
@@ -138,8 +136,8 @@ class StockEnvironment:
                         - self.fixed_cost
                         + trade * self.floating_cost
                     )
-                    
-                    my_world.loc[yesterday, "Shares"] = 1000
+
+                    my_world.loc[yesterday, "Shares"] = abs(trade)
                     my_world.loc[yesterday, "Direction"] = "SELL"
 
                 if trade > 0:
@@ -148,23 +146,22 @@ class StockEnvironment:
                         - self.fixed_cost
                         - trade * self.floating_cost
                     )
-                    
-                    my_world.loc[yesterday, "Shares"] = 1000
+
+                    my_world.loc[yesterday, "Shares"] = trade
                     my_world.loc[yesterday, "Direction"] = "BUY"
 
                 new_action = self.q_learner.train(current_state, reward)
                 holdings = self.action_to_holding(new_action)
 
-        
         trades = my_world[["Shares", "Direction"]]
         trades["Symbol"] = symbol
         trades.reset_index(inplace=True)
         trades = trades.rename(columns={"index": "Date"})
         # print(trades)
         # # exit()
-        # port = assess_strategy(trades, False)
-        # strategy_stats(port, "^SPX", trades)
-        
+        port = assess_strategy(trades, False)
+        strategy_stats(port, "^SPX", trades)
+
         return trades
 
     def test_learner(self, start=None, end=None, symbol=None):
@@ -179,46 +176,45 @@ class StockEnvironment:
         Benchmark result: $6690.0000
         """
 
-        my_world = self.prepare_world("2018-01-01", "2019-12-31", "DIS")
-        my_world["Position"] = 0
-        my_world["Shares"] = 0
-        my_world["Direction"] = 0
+        # my_world = self.prepare_world("2018-01-01", "2019-12-31", "DIS")
+        # my_world["Position"] = 0
+        # my_world["Shares"] = 0
+        # my_world["Direction"] = 0
 
-        first_state = self.calc_state(my_world, my_world.index[30], 0)
-        action = self.q_learner.test(first_state)
-        holdings = self.action_to_holding(action)
+        # first_state = self.calc_state(my_world, my_world.index[30], 0)
+        # action = self.q_learner.test(first_state)
+        # holdings = self.action_to_holding(action)
 
-        for i in range(31, my_world.shape[0] - 1):
-            today = my_world.index[i]
-            yesterday = my_world.index[i - 1]
+        # for i in range(31, my_world.shape[0] - 1):
+        #     today = my_world.index[i]
+        #     yesterday = my_world.index[i - 1]
 
-            current_state = self.calc_state(my_world, today, holdings)
+        #     current_state = self.calc_state(my_world, today, holdings)
 
-            my_world.loc[today, "Position"] = holdings
-            trade = (my_world.loc[today, "Position"] - my_world.loc[yesterday, "Position"])
-        
+        #     my_world.loc[today, "Position"] = holdings
+        #     trade = (my_world.loc[today, "Position"] - my_world.loc[yesterday, "Position"])
 
-            if trade == 0:
-                my_world.loc[yesterday, "Shares"] = 0
+        #     if trade == 0:
+        #         my_world.loc[yesterday, "Shares"] = 0
 
-            if trade < 0:
-                my_world.loc[yesterday, "Shares"] = 1000
-                my_world.loc[yesterday, "Direction"] = "SELL"
+        #     if trade < 0:
+        #         my_world.loc[yesterday, "Shares"] = 1000
+        #         my_world.loc[yesterday, "Direction"] = "SELL"
 
-            if trade > 0:
-                my_world.loc[yesterday, "Shares"] = 1000
-                my_world.loc[yesterday, "Direction"] = "BUY"
+        #     if trade > 0:
+        #         my_world.loc[yesterday, "Shares"] = 1000
+        #         my_world.loc[yesterday, "Direction"] = "BUY"
 
-            new_action = self.q_learner.test(current_state)
-            holdings = self.action_to_holding(new_action)
+        #     new_action = self.q_learner.test(current_state)
+        #     holdings = self.action_to_holding(new_action)
 
-    
-        trades = my_world[["Shares", "Direction"]]
-        trades["Symbol"] = symbol
-        trades.reset_index(inplace=True)
-        trades = trades.rename(columns={"index": "Date"})
-        
-        return trades
+        # trades = my_world[["Shares", "Direction"]]
+        # trades["Symbol"] = symbol
+        # trades.reset_index(inplace=True)
+        # trades = trades.rename(columns={"index": "Date"})
+
+        # return trades
+        pass
 
     def action_to_holding(self, action):
         if action == 0:
@@ -329,5 +325,3 @@ if __name__ == "__main__":
 
     # Out of sample.  Only do this once you are fully satisfied with the in sample performance!
     # env.test_learner( start = args.test_start, end = args.test_end, symbol = args.symbol )
-    
-    
