@@ -2,6 +2,7 @@
 # Evan Phillips and Sumer Vaidya
 # CSCI 3465
 
+from operator import indexOf
 import numpy as np
 import pandas as pd
 import argparse
@@ -15,6 +16,7 @@ class StockEnvironment:
         self.fixed_cost = fixed
         self.floating_cost = floating
         self.starting_cash = starting_cash
+        self.indices = []
 
     def prepare_world(self, start_date, end_date, symbol, data_folder=None):
         """
@@ -24,18 +26,17 @@ class StockEnvironment:
         data = calc_ema(start_date, end_date, [symbol], 25)
         data = calc_aroon(data, 25)
         data = calc_BB(data, 30)
-        data["Daily Return"] = data[symbol]/data[symbol].shift() -1
+        data["Daily Return"] = data[symbol] / data[symbol].shift() - 1
         return data
-
 
     def calc_state(self, df, day, holdings):
         """Quantizes the state to a single number."""
-    
-        coef = int(df.shape[0]/3)
+
+        coef = int(df.shape[0] / 3)
 
         aroon_list = df["Aroon Oscillator"].tolist()[25:]
         ema_list = df["Price/EMA"].tolist()[25:]
-        bb_list = df["BB%"].tolist()[30:]  
+        bb_list = df["BB%"].tolist()[30:]
 
         bb_list.sort()
         aroon_list.sort()
@@ -43,7 +44,7 @@ class StockEnvironment:
 
         today_aroon = df.loc[day, "Aroon Oscillator"]
         today_ema = df.loc[day, "Price/EMA"]
-        today_bb = df.loc[day, "BB%"]    
+        today_bb = df.loc[day, "BB%"]
 
         pos_val = 0
         aroon_val = 0
@@ -52,37 +53,42 @@ class StockEnvironment:
 
         for i in range(1, 3):
 
-            if aroon_list[coef*(i-1)] <= today_aroon <= aroon_list[coef*i]: 
+            if aroon_list[coef * (i - 1)] <= today_aroon <= aroon_list[coef * i]:
                 aroon_val = i
-            
-            if ema_list[coef*(i-1)] <= today_ema <= ema_list[coef*i]: 
+
+            if ema_list[coef * (i - 1)] <= today_ema <= ema_list[coef * i]:
                 ema_val = i
 
-            if bb_list[coef*(i-1)] <= today_bb <= bb_list[coef*i]: 
+            if bb_list[coef * (i - 1)] <= today_bb <= bb_list[coef * i]:
                 bb_val = i
-        
-        if aroon_val == 0: 
-            aroon_val ==3
-        if ema_val == 0: 
-            ema_val ==3
-        if bb_val == 0: 
-            bb_val ==3
 
-        if holdings == -1000: 
+        if aroon_val == 0:
+            aroon_val == 3
+        if ema_val == 0:
+            ema_val == 3
+        if bb_val == 0:
+            bb_val == 3
+
+        if holdings == -1000:
             pos_val = 1
-        elif holdings == 0: 
+        elif holdings == 0:
             pos_val = 2
-        else: 
+        else:
             pos_val = 3
 
-        quant = (str(aroon_val)+str(ema_val)+str(bb_val)+str(pos_val))
-        return int(quant)
+        quant = str(aroon_val) + str(ema_val) + str(bb_val) + str(pos_val)
 
+        if quant in self.indices:
+            return self.indices.index(quant)
+        else:
+            self.indices.append(quant)
+            return self.indices.index(quant)
+
+        # return int(quant)
 
     def train_learner(
         self, start=None, end=None, symbol=None, trips=0, dyna=0, eps=0.0, eps_decay=0.0
     ):
-
 
         """
         Construct a Q-Learning trader and train it through many iterations of a stock
@@ -96,41 +102,48 @@ class StockEnvironment:
 
         my_world = self.prepare_world("2018-01-01", "2019-12-31", "DIS")
         my_world["Shares"] = 0
-        q_learner = TabularQLearnerEP(states = 81, actions = 3)
+        q_learner = TabularQLearnerEP(states=81, actions=3)
 
-        for j in range(500):
-            
+        print("here")
+
+        for j in range(1):
+
             first_state = self.calc_state(my_world, my_world.index[30], 0)
             action = q_learner.test(first_state)
-            print("got here")
             holdings = self.action_to_holding(action)
 
-
-            for i in range(31, my_world.shape[0]-1): 
+            for i in range(31, my_world.shape[0] - 1):
                 today = my_world.index[i]
-                yesterday = my_world.index[i-1]
+                yesterday = my_world.index[i - 1]
 
                 current_state = self.calc_state(my_world, today, holdings)
 
-                my_world.loc[today,"Shares"] = holdings
-                trade = my_world.loc[today,"Shares"] - my_world.loc[yesterday,"Shares"]
+                my_world.loc[today, "Shares"] = holdings
+                trade = (
+                    my_world.loc[today, "Shares"] - my_world.loc[yesterday, "Shares"]
+                )
 
-                
-                if trade == 0: 
-                    reward = holdings*my_world.loc[today, "Daily Return"]
-                
-                if trade < 0: 
-                    reward = holdings*my_world.loc[today, "Daily Return"] - self.fixed_cost + trade*self.floating_cost
+                if trade == 0:
+                    reward = holdings * my_world.loc[today, "Daily Return"]
 
-                if trade > 0: 
-                    reward = holdings*my_world.loc[today, "Daily Return"] - self.fixed_cost - trade*self.floating_cost
+                if trade < 0:
+                    reward = (
+                        holdings * my_world.loc[today, "Daily Return"]
+                        - self.fixed_cost
+                        + trade * self.floating_cost
+                    )
+
+                if trade > 0:
+                    reward = (
+                        holdings * my_world.loc[today, "Daily Return"]
+                        - self.fixed_cost
+                        - trade * self.floating_cost
+                    )
 
                 new_action = q_learner.train(current_state, reward)
                 holdings = self.action_to_holding(new_action)
-                
 
         return 0
-
 
     def test_learner(self, start=None, end=None, symbol=None):
         """
@@ -144,29 +157,13 @@ class StockEnvironment:
         """
         pass
 
-
-
-    def action_to_holding(self, action): 
-        if action == 0: 
+    def action_to_holding(self, action):
+        if action == 0:
             return -1000
-        elif action == 1: 
+        elif action == 1:
             return 0
-        else: 
+        else:
             return 1000
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
 
 if __name__ == "__main__":
@@ -269,8 +266,3 @@ if __name__ == "__main__":
 
     # Out of sample.  Only do this once you are fully satisfied with the in sample performance!
     # env.test_learner( start = args.test_start, end = args.test_end, symbol = args.symbol )
-
-
-print("hello")
-my_world = StockEnvironment()
-my_world.train_learner()
