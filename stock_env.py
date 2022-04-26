@@ -78,6 +78,7 @@ class StockEnvironment:
 
         quant = str(aroon_val) + str(ema_val) + str(bb_val) + str(pos_val)
 
+        # put quantized values into array
         if quant in self.indices:
             return self.indices.index(quant)
         else:
