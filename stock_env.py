@@ -3,11 +3,13 @@
 # CSCI 3465
 
 from operator import indexOf
+from random import randint
 import numpy as np
 import pandas as pd
 import argparse
-from tech_ind import *
 from TabularQLearnerEP import *
+from tech_ind import *
+from TabularQLearner import *
 from BacktestEP import *
 
 
@@ -18,27 +20,25 @@ class StockEnvironment:
         self.floating_cost = floating
         self.starting_cash = starting_cash
         self.indices = []
-        self.q_learner = TabularQLearnerEP(states=81, actions=3)
+        self.q_learner = TabularQLearnerEP(states=192, actions=3)
 
     def prepare_world(self, start_date, end_date, symbol, data_folder=None):
         """
         Read the relevant price data and calculate some indicators.
         Return a DataFrame containing everything you need.
         """
-        data = calc_ema(start_date, end_date, [symbol], 25)
-        data = calc_aroon(data, 25)
-        data = calc_BB(data, 30)
+        data = calc_ema(start_date, end_date, [symbol], 10)
+        data = calc_aroon(data, 20)
+        data = calc_BB(data, 5)
         data["Daily Return"] = data[symbol] / data[symbol].shift() - 1
         return data
 
     def calc_state(self, df, day, holdings):
         """Quantizes the state to a single number."""
 
-        coef = int(df.shape[0] / 3)
-
-        aroon_list = df["Aroon Oscillator"].tolist()[25:]
-        ema_list = df["Price/EMA"].tolist()[25:]
-        bb_list = df["BB%"].tolist()[30:]
+        aroon_list = df["Aroon Oscillator"].tolist()[20:]
+        ema_list = df["Price/EMA"].tolist()[10:]
+        bb_list = df["BB%"].tolist()[5:]
 
         bb_list.sort()
         aroon_list.sort()
@@ -48,28 +48,34 @@ class StockEnvironment:
         today_ema = df.loc[day, "Price/EMA"]
         today_bb = df.loc[day, "BB%"]
 
-        pos_val = 0
-        aroon_val = 0
-        ema_val = 0
-        bb_val = 0
+        if today_bb <= bb_list[int(1/4*len(bb_list))]: 
+            bb_val = 1 
+        elif today_bb <= bb_list[int(2/4*len(bb_list))]: 
+            bb_val = 2 
+        elif today_bb <= bb_list[int(3/4*len(bb_list))]: 
+            bb_val = 3
+        else: 
+            bb_val = 4
 
-        for i in range(1, 3):
 
-            if aroon_list[coef * (i - 1)] <= today_aroon <= aroon_list[coef * i]:
-                aroon_val = i
+        if today_aroon <= aroon_list[int(1/4*len(aroon_list))]: 
+            aroon_val = 1 
+        elif today_aroon <= aroon_list[int(2/4*len(aroon_list))]: 
+            aroon_val = 2 
+        elif today_aroon <= aroon_list[int(3/4*len(aroon_list))]: 
+            aroon_val = 3
+        else: 
+            aroon_val = 4
+            
+        if today_ema < ema_list[int(1/4*len(ema_list))]: 
+            ema_val = 1 
+        elif today_ema < ema_list[int(2/4*len(ema_list))]: 
+            ema_val = 2 
+        elif today_ema < ema_list[int(3/4*len(ema_list))]: 
+            ema_val = 3 
+        else: 
+            ema_val = 4
 
-            if ema_list[coef * (i - 1)] <= today_ema <= ema_list[coef * i]:
-                ema_val = i
-
-            if bb_list[coef * (i - 1)] <= today_bb <= bb_list[coef * i]:
-                bb_val = i
-
-        if aroon_val == 0:
-            aroon_val == 3
-        if ema_val == 0:
-            ema_val == 3
-        if bb_val == 0:
-            bb_val == 3
 
         if holdings == -1000:
             pos_val = 1
@@ -87,8 +93,6 @@ class StockEnvironment:
             self.indices.append(quant)
             return self.indices.index(quant)
 
-        # return int(quant)
-
     def train_learner(
         self, start=None, end=None, symbol=None, trips=0, dyna=0, eps=0.0, eps_decay=0.0
     ):
@@ -102,33 +106,36 @@ class StockEnvironment:
 
         Trip 499 net result: $13600.00
         """
-
+        # my_world = self.prepare_world(start, end, symbol)
         my_world = self.prepare_world("2018-01-01", "2019-12-31", "DIS")
         my_world["Position"] = 0
         my_world["Shares"] = 0
         my_world["Direction"] = 0
 
         for j in range(500):
-
-            first_state = self.calc_state(my_world, my_world.index[30], 0)
+            my_world["Position"] = 0
+            first_state = self.calc_state(my_world, my_world.index[19], 0)
             action = self.q_learner.test(first_state)
             holdings = self.action_to_holding(action)
+            print(j)
 
-            for i in range(31, my_world.shape[0] - 1):
+            for i in range(20, my_world.shape[0] - 1):
                 today = my_world.index[i]
                 yesterday = my_world.index[i - 1]
 
                 current_state = self.calc_state(my_world, today, holdings)
-
                 my_world.loc[today, "Position"] = holdings
+
                 trade = (
                     my_world.loc[today, "Position"]
                     - my_world.loc[yesterday, "Position"]
                 )
 
+                #FIXXXXXXX
                 if trade == 0:
                     reward = holdings * my_world.loc[today, "Daily Return"]
-                    my_world.loc[yesterday, "Shares"] = 0
+                    # my_world.loc[yesterday, "Shares"] = 0
+                    # my_world.loc[yesterday, "Direction"] = "SELL"
 
                 if trade < 0:
                     reward = (
@@ -137,8 +144,8 @@ class StockEnvironment:
                         + trade * self.floating_cost
                     )
 
-                    my_world.loc[yesterday, "Shares"] = abs(trade)
-                    my_world.loc[yesterday, "Direction"] = "SELL"
+                    # my_world.loc[yesterday, "Shares"] = abs(trade)
+                    # my_world.loc[yesterday, "Direction"] = "SELL"
 
                 if trade > 0:
                     reward = (
@@ -147,21 +154,21 @@ class StockEnvironment:
                         - trade * self.floating_cost
                     )
 
-                    my_world.loc[yesterday, "Shares"] = trade
-                    my_world.loc[yesterday, "Direction"] = "BUY"
+                    # my_world.loc[yesterday, "Shares"] = trade
+                    # my_world.loc[yesterday, "Direction"] = "BUY"
 
                 new_action = self.q_learner.train(current_state, reward)
                 holdings = self.action_to_holding(new_action)
+
 
         trades = my_world[["Shares", "Direction"]]
         trades["Symbol"] = symbol
         trades.reset_index(inplace=True)
         trades = trades.rename(columns={"index": "Date"})
-        # print(trades)
-        # # exit()
+        # exit()
         port = assess_strategy(trades, False)
         strategy_stats(port, "^SPX", trades)
-
+        print(trades.to_string())
         return trades
 
     def test_learner(self, start=None, end=None, symbol=None):
@@ -176,45 +183,52 @@ class StockEnvironment:
         Benchmark result: $6690.0000
         """
 
-        # my_world = self.prepare_world("2018-01-01", "2019-12-31", "DIS")
-        # my_world["Position"] = 0
-        # my_world["Shares"] = 0
-        # my_world["Direction"] = 0
+        # my_world = self.prepare_world(start, end, symbol)
+        my_world = self.prepare_world("2018-01-01", "2019-12-31", "DIS")
+        my_world["Shares"] = 0
+        my_world["Direction"] = 0
+        my_world["Position"] = 0
+        first_state = self.calc_state(my_world, my_world.index[19], 0)
+        action = self.q_learner.test(first_state)
+        holdings = self.action_to_holding(action)
+        for i in range(20, my_world.shape[0] - 1):
+            today = my_world.index[i]
+            yesterday = my_world.index[i - 1]
 
-        # first_state = self.calc_state(my_world, my_world.index[30], 0)
-        # action = self.q_learner.test(first_state)
-        # holdings = self.action_to_holding(action)
+            current_state = self.calc_state(my_world, today, holdings)
+            my_world.loc[today, "Position"] = holdings
 
-        # for i in range(31, my_world.shape[0] - 1):
-        #     today = my_world.index[i]
-        #     yesterday = my_world.index[i - 1]
+            trade = (
+                my_world.loc[today, "Position"]
+                - my_world.loc[yesterday, "Position"]
+            )
 
-        #     current_state = self.calc_state(my_world, today, holdings)
+            if trade == 0:
+                my_world.loc[yesterday, "Shares"] = 0
+                my_world.loc[yesterday, "Direction"] = "NONE"
 
-        #     my_world.loc[today, "Position"] = holdings
-        #     trade = (my_world.loc[today, "Position"] - my_world.loc[yesterday, "Position"])
+            if trade < 0:
+                my_world.loc[yesterday, "Shares"] = abs(trade)
+                my_world.loc[yesterday, "Direction"] = "SELL"
 
-        #     if trade == 0:
-        #         my_world.loc[yesterday, "Shares"] = 0
+            if trade > 0:
 
-        #     if trade < 0:
-        #         my_world.loc[yesterday, "Shares"] = 1000
-        #         my_world.loc[yesterday, "Direction"] = "SELL"
+                my_world.loc[yesterday, "Shares"] = trade
+                my_world.loc[yesterday, "Direction"] = "BUY"
 
-        #     if trade > 0:
-        #         my_world.loc[yesterday, "Shares"] = 1000
-        #         my_world.loc[yesterday, "Direction"] = "BUY"
+            new_action = self.q_learner.test(current_state)
+            holdings = self.action_to_holding(new_action)
 
-        #     new_action = self.q_learner.test(current_state)
-        #     holdings = self.action_to_holding(new_action)
+        trades = my_world[["Shares", "Direction"]]
+        trades["Symbol"] = symbol
+        trades.reset_index(inplace=True)
+        trades = trades.rename(columns={"index": "Date"})
+        # exit()
+        port = assess_strategy(trades, False)
+        strategy_stats(port, "^SPX", trades)
+        print(trades.to_string())
 
-        # trades = my_world[["Shares", "Direction"]]
-        # trades["Symbol"] = symbol
-        # trades.reset_index(inplace=True)
-        # trades = trades.rename(columns={"index": "Date"})
-
-        # return trades
-        pass
+        return trades
 
     def action_to_holding(self, action):
         if action == 0:
