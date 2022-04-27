@@ -24,7 +24,7 @@ def calc_sma(start, end, symbol, n):
     prices["SMA"] = prices[ticker]
 
     for i in range(1, n):
-        prices["SMA"] = prices["SMA"] + prices["DIS"].shift(periods=i)
+        prices["SMA"] = prices["SMA"] + prices[ticker].shift(periods=i)
 
     prices["SMA"] = prices["SMA"] / n
     return prices
