@@ -26,7 +26,7 @@ class TabularQLearnerEP:
         self.epsilon = epsilon
         self.epsilon_decay = epsilon_decay
         self.dyna = dyna
-        self.q_table = np.random.uniform(low=-0.25, high=0.25, size=(states, actions))
+        self.q_table = np.random.uniform(low=-0.01, high=0.01, size=(states, actions))
         self.prev_state = None
         self.prev_action = None
         self.experience_tuples = []

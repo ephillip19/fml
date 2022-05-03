@@ -44,7 +44,7 @@ class TechnicalStrategy:
 
         data = calc_ema(start_date, end_date, [symbol], 10)
         data = calc_aroon(data, 20)
-        data = calc_BB(data, 5)
+        data = calc_BB(start_date, end_date, data, 5)
 
         trade_dates = []
 
@@ -149,5 +149,5 @@ class TechnicalStrategy:
     # dates = run[1]
     trades = test()
     # plot(trades)
-    # port = assess_strategy(trades, False)
-    # strategy_stats(port, "^SPX", trades)
+    port = assess_strategy(trades, False)
+    strategy_stats(port, "^SPX", trades)

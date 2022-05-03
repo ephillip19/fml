@@ -30,23 +30,25 @@ def calc_sma(start, end, symbol, n):
     return prices
 
 
-def calc_BB(prices, n):
+def calc_BB(start, end, prices, n):
 
     ticker = prices.columns[0]
-    # prices = calc_sma(start, end, symbol, n)
+    new = calc_ema(start, end, [ticker], n)
 
     prices["BB_lower"] = prices["SMA"]
     prices["BB_upper"] = prices["SMA"]
+    new["BB_lower"] = new["SMA"]
+    new["BB_upper"] = new["SMA"]
 
     for i in range(n - 1, prices.shape[0]):
         start = prices.index[i - (n - 1)]
         end = prices.index[i]
 
         prices.loc[end, "BB_lower"] = (
-            prices.loc[end, "BB_lower"] - 2 * prices.loc[start:end, ticker].std()
+            new.loc[end, "BB_lower"] - 2 * new.loc[start:end, ticker].std()
         )
         prices.loc[end, "BB_upper"] = (
-            prices.loc[end, "BB_upper"] + 2 * prices.loc[start:end, ticker].std()
+            new.loc[end, "BB_upper"] + 2 * new.loc[start:end, ticker].std()
         )
 
     prices["BB%"] = (prices[ticker] - prices["BB_lower"]) / (
@@ -179,14 +181,14 @@ def calc_aroon(prices, n):
     return prices
 
 
-def test():
+# def test():
 
-    # data = calc_ema("1/1/2018", "12/31/2019", ["DIS"], 25)
-    # data = calc_aroon(data, 25)
-    # data = calc_BB(data, 30)
-    # # print(data)
+#     # data = calc_ema("1/1/2018", "12/31/2019", ["DIS"], 25)
+#     # data = calc_aroon(data, 25)
+#     # data = calc_BB(data, 30)
+#     # # print(data)
 
-    return 0
+#     return 0
 
 
-test()
+# test()
