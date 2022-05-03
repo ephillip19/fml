@@ -169,17 +169,17 @@ class StockEnvironment:
                 if trade == 0:
                     my_world.loc[yesterday, "Shares"] = 0
                     my_world.loc[today, "Cash"] = my_world.loc[yesterday, "Cash"]
-                    my_world.loc[yesterday, "Direction"] = "NONE"
+                    # my_world.loc[yesterday, "Direction"] = "NONE"
 
                 if trade < 0:
                     my_world.loc[today, "Cash"] = my_world.loc[yesterday, "Cash"] - trans_val - cost 
-                    my_world.loc[yesterday, "Shares"] = abs(trade)
-                    my_world.loc[yesterday, "Direction"] = "SELL"
+                    # my_world.loc[yesterday, "Shares"] = abs(trade)
+                    # my_world.loc[yesterday, "Direction"] = "SELL"
 
                 if trade > 0:
                     my_world.loc[today, "Cash"] = my_world.loc[yesterday, "Cash"] - trans_val - cost 
-                    my_world.loc[yesterday, "Shares"] = trade
-                    my_world.loc[yesterday, "Direction"] = "BUY"
+                    # my_world.loc[yesterday, "Shares"] = trade
+                    # my_world.loc[yesterday, "Direction"] = "BUY"
 
                 
                 today_port_val = my_world.loc[today, "Cash"] + my_world.loc[today, "Holdings"]*my_world.loc[today, symbol]
